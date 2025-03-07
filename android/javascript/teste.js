@@ -6,7 +6,7 @@ console.log(foo);
 const pi = Math.PI;
 console.log(pi);
 
-//Strings 
+//Strings
 let nome = "João";
 let sobrenome = "Silva";
 let frase = `Olá, ${nome}`;
