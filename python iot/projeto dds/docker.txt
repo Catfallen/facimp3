@@ -1,0 +1,18 @@
+
+Terminal 1:
+//Cria e roda o container e executa o ros
+docker run -it --name ros_dds --network host ros:humble
+
+Docker abrido
+root@marcos-82MD:/# source /opt/ros/humble/setup.bash
+
+-Publisher
+root@marcos-82MD:/# ros2 topic pub /teste std_msgs/msg/String 'data: "Ola DDS!"'
+
+
+
+Terminal 2:
+Entrar em um container em execução
+docker exec -it ros_dds bash
+source /opt/ros/humble/setup.bash //executa o ros 
+ros2 topic echo /teste

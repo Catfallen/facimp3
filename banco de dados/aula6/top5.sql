@@ -3,4 +3,4 @@ join inventory i on i.inventory_id = r.inventory_id
 join film f on f.film_id = i.film_id
 group by f.title
 order by total_alugados desc
-limit 10;
+limit 5;

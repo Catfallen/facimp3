@@ -1,0 +1,8 @@
+Criar um publisher
+ros2 topic pub /meutopico std_msgs/msg/String "data: 'Olá, ROS2!'"
+
+Criar um subscriber (echo)
+ros2 topic echo /teste1
+
+Escutar dois topicos ao mesmo tempo
+ros2 topic echo /test21 & ros2 topic echo /teste2

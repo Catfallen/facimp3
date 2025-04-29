@@ -1,0 +1,27 @@
+Terminal 1:
+//Container reutilizavel
+docker run -it --name ros_dds --network host ros:humble //Cria um container reutilizavel importando o ros humble
+
+//Parar um container em execução
+docker stop ros_dds
+
+//Remover um container
+docker rm ros_dds
+
+Container em segundo plano:
+Modo detached (segundo plano)
+docker run -dit --name ros_dds --network host ros:humble
+-d: modo "detached" (em segundo plano)
+-it: modo interativo com terminal (ainda permite você se conectar depois)
+
+Entrar no container
+Terminal 1: 
+docker exec -it ros_dds bash 
+
+Caso for executar em um terminal diferente é preciso importar o ros2.
+
+Executar ros2 automaticamente
+Container: echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
+
+
