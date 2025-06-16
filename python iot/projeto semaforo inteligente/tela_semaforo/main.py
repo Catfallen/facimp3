@@ -1,8 +1,8 @@
 import tkinter as tk
 import paho.mqtt.client as mqtt
 
-BROKER = "192.168.0.112"
-PORT = 1891
+BROKER = ["192.168.0.112",'192.168.0.109'][1]
+PORT = 1890
 TOPIC_VEZ = "semaforo/vez"
 QOS = 1
 
