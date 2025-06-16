@@ -2,64 +2,59 @@ import serial
 import time
 import paho.mqtt.client as mqtt
 
-BROKER = "192.168.0.109"
+BROKER = "172.16.9.39"
 PORT = 1890
-TOPIC_ENVIO = "semaforo/vez"
-TOPIC_CONFIRMACAO = "semaforo/pedestre"
+TOPIC_VEZ = "semaforo/vez"
 QOS = 1
 
 PORTA_SERIAL = '/dev/ttyACM0'
 BAUDRATE = 9600
 
-client = mqtt.Client(client_id="python-ultrasom")
+client = mqtt.Client()
 
 def on_connect(client, userdata, flags, rc):
-    print(f"[MQTT] Conectado ao broker com código: {rc}")
-    if rc == 0:
-        client.subscribe(TOPIC_CONFIRMACAO, qos=QOS)
-        print(f"[MQTT] Inscrito no tópico: {TOPIC_CONFIRMACAO}")
-    else:
-        print("[MQTT] Falha na conexão.")
+    print(f"[MQTT] Conectado com código {rc}")
+    client.subscribe(TOPIC_VEZ, qos=QOS)
 
 def on_message(client, userdata, msg):
-    payload = msg.payload.decode()
-    print(f"[MQTT] Mensagem recebida no tópico '{msg.topic}': {payload}")
-    if payload.strip() == "OK":
-        arduino.write(b"OK\n")
-        print("[Serial] OK enviado para o Arduino.")
+    pass  # Não precisa agir aqui no ultrasom
 
 client.on_connect = on_connect
 client.on_message = on_message
 
-print("[MQTT] Conectando ao broker...")
-client.connect(BROKER, PORT, 60)
+client.connect(BROKER, PORT)
 client.loop_start()
 
-print(f"[Serial] Conectando na porta {PORTA_SERIAL}...")
 try:
     arduino = serial.Serial(PORTA_SERIAL, BAUDRATE, timeout=1)
     time.sleep(2)
-    print("[Serial] Conectado com sucesso.")
+    print("[Serial] Conectado no Arduino")
 except Exception as e:
     print(f"[Erro Serial] {e}")
     exit()
 
-print("[Sistema] Aguardando dados do Arduino...")
+vez_atual = None
 
-try:
-    while True:
-        if arduino.in_waiting > 0:
-            msg = arduino.readline().decode().strip()
-            if msg:
-                print(f"[Serial] Recebido do Arduino: {msg}")
-                client.publish(TOPIC_ENVIO, msg, qos=QOS)
-                print(f"[MQTT] Publicado '{msg}' no tópico {TOPIC_ENVIO}")
-        time.sleep(0.1)
+while True:
+    if arduino.in_waiting:
+        linha = arduino.readline().decode().strip()
+        if linha:
+            print(f"[Serial] {linha}")
 
-except KeyboardInterrupt:
-    print("\n[Encerrando] Ctrl+C detectado.")
+            if linha == "C":  # presença detectada: pausa o ciclo
+                vez_atual = "C"
+                client.publish(TOPIC_VEZ, "C", qos=QOS, retain=True)
+                print("[MQTT] Publicado C - ciclo pausado")
+            elif linha == "R":  # sem presença, libera ciclo
+                if vez_atual == "C" or vez_atual is None:
+                    vez_atual = "A"
+                    client.publish(TOPIC_VEZ, "A", qos=QOS, retain=True)
+                    print("[MQTT] Publicado A - iniciando ciclo")
+            else:
+                # Se Arduino enviar "A" ou "B" explicitamente, pode publicar
+                if linha in ["A", "B"]:
+                    vez_atual = linha
+                    client.publish(TOPIC_VEZ, vez_atual, qos=QOS, retain=True)
+                    print(f"[MQTT] Publicado {vez_atual}")
 
-finally:
-    client.loop_stop()
-    arduino.close()
-    print("[Sistema] Finalizado com segurança.")
+    time.sleep(0.1)

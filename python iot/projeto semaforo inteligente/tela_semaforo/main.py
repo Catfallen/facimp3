@@ -1,7 +1,7 @@
 import tkinter as tk
 import paho.mqtt.client as mqtt
 
-BROKER = ["192.168.0.112", '192.168.0.109'][1]
+BROKER = ["192.168.0.112", '192.168.0.109', '192.168.255.77','172.16.9.39'][3]
 PORT = 1890
 TOPIC_VEZ = "semaforo/vez"
 QOS = 1
@@ -66,10 +66,15 @@ class SemaforoCliente:
             self.indice_cor = 0
             self.label.config(text=f"Cliente {self.nome} ativo", fg="white")
             self.ciclo_cores()
+        elif mensagem == "C":
+            # Presença detectada: para o semáforo
+            self.ciclo_ativo = False
+            self.label.config(text=f"Cliente {self.nome} parado (Presença detectada)", fg="red")
+            self.apagar_todas_luzes()
+            self.acender_luz("red")
         else:
             self.ciclo_ativo = False
             self.label.config(text=f"Cliente {self.nome} parado", fg="red")
-            # Enquanto parado, só vermelho aceso
             self.apagar_todas_luzes()
             self.acender_luz("red")
 
@@ -77,14 +82,11 @@ class SemaforoCliente:
         if not self.ciclo_ativo:
             return
 
-        # Apaga todas as luzes
         self.apagar_todas_luzes()
 
-        # Acende a luz da cor atual
         cor_atual = self.cores[self.indice_cor]
         self.acender_luz(cor_atual)
 
-        # Atualiza label com a cor atual
         self.label.config(text=f"Cliente {self.nome}: {cor_atual.upper()}", fg=cor_atual)
 
         self.indice_cor += 1
@@ -93,11 +95,8 @@ class SemaforoCliente:
             print(f"Cliente {self.nome} terminou ciclo, passando para {outro}")
             self.client.publish(TOPIC_VEZ, outro, qos=QOS, retain=True)
             self.ciclo_ativo = False
-
-            # Ao final do ciclo, mantém apenas o vermelho aceso
             self.apagar_todas_luzes()
             self.acender_luz("red")
-
             self.label.config(text=f"Cliente {self.nome} parado", fg="red")
             return
 
@@ -108,7 +107,6 @@ class SemaforoCliente:
             self.canvas.itemconfig(c, fill="gray20")
 
     def acender_luz(self, cor):
-        # Mapeia a cor para a posição física correta
         index = self.cor_visual.index(cor)
         self.canvas.itemconfig(self.circulos[index], fill=cor)
 
@@ -122,7 +120,6 @@ if __name__ == "__main__":
 
     app = SemaforoCliente(root, nome_cliente)
 
-    # Cliente A inicia o ciclo
     if nome_cliente == "A":
         app.client.publish(TOPIC_VEZ, "A", qos=QOS, retain=True)
 
