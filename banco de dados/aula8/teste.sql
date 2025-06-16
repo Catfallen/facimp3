@@ -6,7 +6,6 @@ end;
 $$
 Language plpgsql
 
-
 --procedure
 DO $$
 declare
